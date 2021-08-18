@@ -22,8 +22,8 @@ class ThreadWorker(threading.Thread):
             data = self.queue.get()
             message = data['message']
             masterQueue = data['queue']
+            self.busy = True
             try:
-                self.busy = True
                 decoded = json.loads(message)
                 unMigratedRows = self.process(decoded)
                 masterQueue.put(item=unMigratedRows, block=False)
@@ -32,6 +32,8 @@ class ThreadWorker(threading.Thread):
                 Logger.getLogger().error(str(e))
                 decoded = json.loads(message)
                 masterQueue.put(item=decoded, block=False)
+            finally:
+                self.busy = False
 
     def process(self, body: Dict):
         schema = body['schema']
