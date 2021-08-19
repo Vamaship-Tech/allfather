@@ -7,5 +7,5 @@ class Logger:
     def getLogger() -> logging:
         today = date.today()
         logging.basicConfig(
-            filename=f"logs/service-{today.strftime('%Y-%m-%d')}.log", encoding="UTF8", level=logging.INFO)
+            filename=f"logs/service-{today.strftime('%Y-%m-%d')}.log", encoding="utf-8", level=logging.INFO)
         return logging
