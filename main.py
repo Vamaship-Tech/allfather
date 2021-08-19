@@ -12,7 +12,7 @@ try:
     channel = connection.channel()
     channel.basic_consume(queue="shipments", on_message_callback=lambda channel,
                           method, _, body: rabbitMqWorker.dispatcher(channel, method, body))
-    print("[x] In days of peace, in nights of war, Obey the All Father forever more!")
+    print("[x] In days of peace, and nights of war, obey the All Father forever more!")
     channel.start_consuming()
     channel.close()
     connection.close()
