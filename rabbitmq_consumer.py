@@ -1,4 +1,3 @@
-import json
 from logger import Logger
 from thread_worker import ThreadWorker
 from typing import List
@@ -33,12 +32,6 @@ class RabbitMqWorker:
         if index == -1:
             return
         worker = self.workers[index]
-        masterQueue = Queue()
-        worker.queue.put({"message": body, "queue": masterQueue})
-        unMigrated = masterQueue.get()
+        worker.queue.put(
+            item={"message": body, "channel": channel}, block=False)
         channel.basic_ack(method.delivery_tag)
-        if len(unMigrated['rows']) > 0:
-            exchange = "mongo_syncer"
-            routingKey = ""
-            channel.basic_publish(
-                exchange=exchange, routing_key=routingKey, body=json.dumps(unMigrated))
