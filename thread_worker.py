@@ -27,7 +27,6 @@ class ThreadWorker(threading.Thread):
                 decoded = json.loads(message)
                 unMigratedRows = self.process(decoded)
                 masterQueue.put(item=unMigratedRows, block=False)
-                self.busy = False
             except Exception as e:
                 Logger.getLogger().error(str(e))
                 decoded = json.loads(message)
