@@ -24,6 +24,7 @@ class ThreadWorker(threading.Thread):
             message = data['message']
             channel = data['channel']
             self.busy = True
+            Logger.getLogger().info(f"[x] {self.threadId} status: Busy")
             try:
                 decoded = json.loads(message)
                 self.process(decoded, channel)
@@ -35,6 +36,7 @@ class ThreadWorker(threading.Thread):
                     exchange=exchange, routing_key=routingKey, body=message)
             finally:
                 self.busy = False
+                Logger.getLogger().info(f"[x] {self.threadId} status: Idle")
 
     def process(self, body: Dict, channel: BlockingChannel):
         schema = body['schema']
