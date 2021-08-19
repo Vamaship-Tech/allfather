@@ -41,7 +41,7 @@ class ThreadWorker(threading.Thread):
         type = body['type']
         migrator = Migrator()
         unMigrated: List[Dict] = []
-        Logger.getLogger().info(f"[x] {type} - {collection}: {len(rows)} rows")
+        Logger.getLogger().info(f"[x] {type} - {collection}: {len(rows)} rows --- [Thread ID: {self.threadId}]")
         for row in rows:
             result = migrator.handle(type, schema, collection, row)
             if result == False:
