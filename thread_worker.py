@@ -36,7 +36,7 @@ class ThreadWorker(threading.Thread):
                     exchange=exchange, routing_key=routingKey, body=message)
             finally:
                 self.busy = False
-                Logger.getLogger().info(f"[x] {self.threadId} status: Idle")
+                Logger.getLogger().info(f"[x] Thread ID {self.threadId} status: Idle")
 
     def process(self, body: Dict, channel: BlockingChannel):
         schema = body['schema']
