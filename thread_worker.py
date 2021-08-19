@@ -24,7 +24,7 @@ class ThreadWorker(threading.Thread):
             message = data['message']
             channel = data['channel']
             self.busy = True
-            Logger.getLogger().info(f"[x] {self.threadId} status: Busy")
+            Logger.getLogger().info(f"[x] Thread ID {self.threadId} status: Busy")
             try:
                 decoded = json.loads(message)
                 self.process(decoded, channel)
