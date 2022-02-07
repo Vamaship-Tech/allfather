@@ -1,35 +1,36 @@
 from pika.adapters.blocking_connection import BlockingChannel
-from logger import Logger
+from pymongo.mongo_client import MongoClient
 from migrator import Migrator
 import json
 import threading
 from queue import Queue
 from time import sleep
-from typing import Dict, List
+from typing import Dict
 
 
 class ThreadWorker(threading.Thread):
-    def __init__(self, threadId, queue: Queue, name: str) -> None:
-        self.busy = False
+    def __init__(self, thread_id, queue: Queue, mongo_connection: MongoClient, name: str) -> None:
         threading.Thread.__init__(self, group=None)
+        self.busy = False
         self.queue = queue
-        self.name = name
-        self.threadId = threadId
+        self.setName(name)
+        self.thread_id = thread_id
+        self.mongo_connection = mongo_connection
 
     def run(self):
-        Logger.getLogger().info(f"[x] Acknowledged from : {self.threadId}")
+        print(f"[x] Spawned Thread : {self.getName()}")
         while True:
             sleep(1)
             data = self.queue.get()
             message = data['message']
             channel = data['channel']
             self.busy = True
-            Logger.getLogger().info(f"[x]Processing on Thread ID: {self.threadId}")
+            print(f"[x]Processing on Thread ID: {self.getName()}")
             try:
                 decoded = json.loads(message)
-                self.process(decoded, channel)
+                self.process(decoded)
             except Exception as e:
-                Logger.getLogger().error(str(e))
+                print(str(e))
                 exchange = "mongo_syncer"
                 routingKey = ""
                 channel.basic_publish(
@@ -37,34 +38,20 @@ class ThreadWorker(threading.Thread):
             finally:
                 self.busy = False
 
-    def process(self, body: Dict, channel: BlockingChannel):
+    def process(self, body: Dict):
         schema = body['schema']
         collection = body['table']
         rows = body['rows']
-        type = body['type']
+        action = body['type']
         migrator = Migrator()
-        unMigratedRows: List[Dict] = []
-        Logger.getLogger().info(
-            f"[x] {type} - {collection}: {len(rows)} rows --- [Thread ID: {self.threadId}]")
-        for row in rows:
-            result = migrator.handle(type, schema, collection, row)
-            if result == False:
-                unMigratedRows.append(row)
+        migrator.handle(self.mongo_connection, action,
+                        schema, collection, rows)
 
-        unMigrated = {"schema": schema, "table": collection,
-                      "rows": unMigratedRows, "type": type}
-
-        if len(unMigrated['rows']) > 0:
-            exchange = "mongo_syncer"
-            routingKey = ""
-            channel.basic_publish(
-                exchange=exchange, routing_key=routingKey, body=json.dumps(unMigrated))
-
-    def getQueue(self):
+    def get_queue(self):
         return self.queue
 
-    def getThreadId(self):
-        return self.threadId
+    def get_thread_id(self):
+        return self.thread_id
 
-    def isIdle(self):
+    def is_idle(self):
         return self.busy == False

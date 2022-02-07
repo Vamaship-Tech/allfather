@@ -1,0 +1,8 @@
+FROM python:3.9.10-buster
+
+RUN apt update -y
+RUN mkdir -p /usr/share/app
+WORKDIR /usr/share/app
+COPY . .
+RUN apt install netcat -y
+RUN pip3 install --no-cache-dir -r requirements.txt

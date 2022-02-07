@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+  python:
+    build:
+      context: .
+      dockerfile: ./docker-files/Dockerfile-python
+    restart: always
+    volumes:
+      - .:/usr/share/app
+    networks:
+      - mongo_syncer
+    entrypoint: "./entrypoint.sh"
+    depends_on:
+      - mongo
+  mongo:
+    image: mongo:4.0.10
+    ports:
+      - 27017:27017
+    networks:
+      - mongo_syncer
+
+networks:
+  mongo_syncer:
+    external: true
+    name: mongo_syncer

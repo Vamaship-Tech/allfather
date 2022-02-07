@@ -1,34 +1,37 @@
-from typing import Dict
+from typing import Dict, List
 from pymongo import MongoClient, collection as mongoCollection
+from datetime import datetime
 
 
 class Migrator:
-    def handle(self, type: str, schema: str, collection: str, row: Dict):
-        connection = MongoClient("mongodb://localhost:27017")
-        database = connection[schema]
-        table = database[collection]
-        if type == 'UPDATE':
-            return self.__update(row, table)
-        if type == 'DELETE':
-            return self.__delete(row, table)
-        if type == "INSERT":
-            return self.__insert(row, table)
+    def handle(self, connection: MongoClient, action: str, schema: str, collection: str, rows: List[Dict]):
+        schema = connection[schema]
+        collection = schema[collection]
+        if action in ('UPDATE', 'INSERT'):
+            return self.__upsert(rows, collection)
+        if action == 'DELETE':
+            return self.__delete(rows, collection)
 
-    def __insert(self, row: Dict, collection: mongoCollection.Collection):
-        exists = collection.find({"id": row['id']}).count() > 0
-        if exists == False:
-            collection.insert(row)
-            return True
-        return True
+    def __upsert(self, rows: List[Dict], collection: mongoCollection.Collection):
+        for row in rows:
+            print(datetime.strptime(row['updated_at'], "%Y-%m-%dT%H:%M:%S.%f%z"))
+            search = {
+                "$and": [
+                    {"id": row['id']},
+                    {
+                        "updated_at": {
+                            "$gt": datetime.strptime(row['updated_at'], "%Y-%m-%dT%H:%M:%S.%f%z")
+                        },
+                    }
+                ]
+            }
+            exists = collection.find(search).count() > 0
+            print(f"Exists: {exists}")
+            if exists:
+                continue
+            collection.replace_one({"id": row['id']}, row, upsert=True)
 
-    def __update(self, row: Dict, collection: mongoCollection.Collection):
-        exists = collection.find({"id": row['id']}).count() > 0
-        if exists == False:
-            collection.insert(row)
-            return True
-        collection.find_one_and_update({"id": row['id']}, {'$set': row})
-        return True
-
-    def __delete(self, row: Dict, collection: mongoCollection.Collection):
-        collection.delete_one({'id': row['id']})
+    def __delete(self, rows: List, collection: mongoCollection.Collection):
+        search = [row['id'] for row in rows]
+        collection.delete_many({"id": {"$in": search}})
         return True
