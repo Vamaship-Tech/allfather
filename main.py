@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 import pika
 from rabbitmq_consumer import RabbitMqWorker
 from os import getenv
