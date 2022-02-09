@@ -6,7 +6,7 @@ import threading
 from queue import Queue
 from time import sleep
 from typing import Dict
-
+from logger import Logger
 
 class ThreadWorker(threading.Thread):
     def __init__(self, thread_id, queue: Queue, mongo_connection: MongoClient, name: str) -> None:
@@ -21,7 +21,7 @@ class ThreadWorker(threading.Thread):
         print(f"[x] Spawned Thread : {self.getName()}")
         while True:
             sleep(1)
-            data = self.queue.get()
+            data = self.queue.get(block=True)
             message = data['message']
             channel = data['channel']
             self.busy = True
@@ -30,7 +30,7 @@ class ThreadWorker(threading.Thread):
                 decoded = json.loads(message)
                 self.process(decoded)
             except Exception as e:
-                print(str(e))
+                Logger.get_logger().exception(msg=f"Exception: {e}")
                 exchange = "mongo_syncer"
                 routingKey = ""
                 channel.basic_publish(
