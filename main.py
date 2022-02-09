@@ -43,13 +43,11 @@ except KeyboardInterrupt:
     print('[x] Exiting')
     channel.close()
     connection.close()
-except Exception as e:
-    channel.close()
-    connection.close()
-    print(str(e))
     for thread in rabbitMqWorker.workers:
         if thread.is_alive():
             thread.join()
             print(f"Closing threads: {thread.getName()}")
+except Exception as e:
+    print("Exception:" + str(e))
 
 exit(1)
