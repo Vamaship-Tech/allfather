@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 load_dotenv()
 import pika
+from typing import List
+from pika.adapters.blocking_connection import BlockingChannel
 from rabbitmq_consumer import RabbitMqWorker
 from os import getenv
 
@@ -24,24 +26,30 @@ tables = (
 )
 
 try:
-    channel = connection.channel()
+    channels: List[BlockingChannel] = []
     for queue in tables:
+        channel = connection.channel()
         channel.queue_declare(queue, False, True)
         channel.basic_consume(
             queue=queue,
             on_message_callback=lambda channel, method, _, body: rabbitMqWorker.dispatcher(channel, method, body)
         )
+        channels.append(channel)
     print("[x] In days of peace, and nights of war, obey the All Father forever more!")
     channel.start_consuming()
 except pika.exceptions.AMQPConnectionError as e:
     print(str(e))
+    for channel in channels:
+        channel.close()
+    connection.close()
     for thread in rabbitMqWorker.workers:
         if thread.is_alive():
             thread.join()
             print(f"Closing threads: {thread.getName()}")
 except KeyboardInterrupt:
     print('[x] Exiting')
-    channel.close()
+    for channel in channels:
+        channel.close()
     connection.close()
     for thread in rabbitMqWorker.workers:
         if thread.is_alive():
