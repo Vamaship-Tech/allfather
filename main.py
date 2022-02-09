@@ -25,8 +25,6 @@ tables = (
 
 try:
     channel = connection.channel()
-    channel.queue_declare(queue='shipment_queue', durable=True)
-    channel = connection.channel()
     for queue in tables:
         channel.queue_declare(queue, False, True)
         channel.basic_consume(
