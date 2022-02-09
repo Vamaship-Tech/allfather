@@ -12,7 +12,6 @@ class RabbitMqWorker:
 
     def __init__(self) -> None:
         self.workers = []
-        print(getenv("MONGO_HOST", "localhost"))
         self.mongo_pool = MongoClient(host=getenv("MONGO_HOST", "localhost"), port=27017, minPoolSize=10)
 
     def spawn(self):
