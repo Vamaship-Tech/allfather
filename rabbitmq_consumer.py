@@ -34,7 +34,6 @@ class RabbitMqWorker:
 
     def dispatcher(self, channel: BlockingChannel, method: Basic.Deliver, body: str):
         """Dispatches the message to the worker thread"""
-        print(body)
         index = self.get_idle_worker_index()
         if index == -1:
             return
